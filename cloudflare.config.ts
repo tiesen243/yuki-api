@@ -1,4 +1,4 @@
-import { bindings, defineConfig } from 'cf/config'
+import { bindings, defineConfig, exports } from 'cf/config'
 
 import * as entrypoint from './src/index.ts' with { type: 'cf-worker' }
 
@@ -9,6 +9,13 @@ export default defineConfig({
     entrypoint,
     env: {
       DB: bindings.d1({ name: 'yuki-db' }),
+      Stream: bindings.durableObject({
+        exportName: 'StreamDurableObject',
+        worker: 'yuki-api',
+      }),
+    },
+    exports: {
+      StreamDurableObject: exports.durableObject({ storage: 'sqlite' }),
     },
   },
 })

@@ -8,14 +8,6 @@ import * as Schema from 'effect/Schema'
 import { Post, PostId } from '@/domain/post.entity'
 import { PostNotFound } from '@/domain/post.error'
 
-class HomeApi extends HttpApiGroup.make('home').add(
-  HttpApiEndpoint.get('index', '/', {
-    success: Schema.Struct({
-      message: Schema.String,
-    }),
-  })
-) {}
-
 class PostApi extends HttpApiGroup.make('post')
   .add(
     HttpApiEndpoint.get('list', '/', {
@@ -47,4 +39,4 @@ class PostApi extends HttpApiGroup.make('post')
 
   .prefix('/api/posts') {}
 
-export class Api extends HttpApi.make('api').add(HomeApi).add(PostApi) {}
+export class Api extends HttpApi.make('api').add(PostApi) {}

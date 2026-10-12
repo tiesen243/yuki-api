@@ -40,6 +40,5 @@ export default defineConfig({
 
   sortTailwindcss: {
     functions: ['clsx', 'cva', 'cn'],
-    stylesheet: './packages/ui/src/tailwind.css',
   },
 })

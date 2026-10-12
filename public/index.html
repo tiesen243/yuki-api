@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Yuki Chat</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background: #313338;
+      }
+
+      .scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #1e1f22 transparent;
+      }
+
+      .scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .scrollbar::-webkit-scrollbar-thumb {
+        background: #1e1f22;
+        border-radius: 999px;
+      }
+
+      .scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #18191c;
+      }
+
+      .room-button {
+        transition:
+          background-color 120ms ease,
+          color 120ms ease;
+      }
+
+      .room-button:hover {
+        background: #3f4147;
+        color: #f2f3f5;
+      }
+
+      .room-button.active {
+        background: #404249;
+        color: #ffffff;
+      }
+
+      .message-row {
+        transition: background-color 100ms ease;
+      }
+
+      .message-row:hover {
+        background: rgba(30, 31, 34, 0.25);
+      }
+
+      .modal-backdrop {
+        background: rgba(0, 0, 0, 0.72);
+        backdrop-filter: blur(4px);
+      }
+
+      .avatar-gradient {
+        background: linear-gradient(135deg, #5865f2, #7289da);
+      }
+    </style>
+  </head>
+
+  <body class="overflow-hidden text-[#dbdee1]">
+    <div class="flex h-screen w-full">
+      <!-- Server sidebar -->
+      <aside
+        class="flex w-[72px] shrink-0 flex-col items-center gap-2 bg-[#1e1f22] py-3"
+      >
+        <button
+          class="group flex h-12 w-12 items-center justify-center rounded-[16px] bg-[#5865f2] text-white transition-all hover:rounded-[14px] hover:bg-[#4752c4]"
+          title="Yuki Chat"
+        >
+          <i data-lucide="message-circle" class="h-6 w-6"></i>
+        </button>
+
+        <div class="my-1 h-px w-8 bg-[#35363c]"></div>
+
+        <button
+          class="group flex h-12 w-12 items-center justify-center rounded-[24px] bg-[#313338] text-[#b5bac1] transition-all hover:rounded-[16px] hover:bg-[#23a559] hover:text-white"
+          title="Add Server"
+        >
+          <i data-lucide="plus" class="h-5 w-5"></i>
+        </button>
+      </aside>
+
+      <!-- Channel sidebar -->
+      <aside class="flex w-60 shrink-0 flex-col bg-[#2b2d31]">
+        <!-- Server header -->
+        <div
+          class="flex h-12 shrink-0 items-center justify-between border-b border-[#1f2023] px-4 shadow-sm"
+        >
+          <button
+            class="flex min-w-0 flex-1 items-center justify-between rounded px-1 py-1 text-left hover:bg-[#35373c]"
+          >
+            <span class="truncate text-sm font-semibold text-white">
+              Yuki Chat
+            </span>
+
+            <i
+              data-lucide="chevron-down"
+              class="h-4 w-4 shrink-0 text-[#b5bac1]"
+            ></i>
+          </button>
+        </div>
+
+        <!-- Room list -->
+        <div class="scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-4">
+          <div class="mb-2 flex items-center justify-between px-2">
+            <span
+              class="text-xs font-semibold tracking-wide text-[#949ba4] uppercase"
+            >
+              Text Channels
+            </span>
+
+            <button
+              class="text-[#949ba4] hover:text-white"
+              title="Create Channel"
+            >
+              <i data-lucide="plus" class="h-4 w-4"></i>
+            </button>
+          </div>
+
+          <nav id="roomList" class="space-y-0.5"></nav>
+        </div>
+
+        <!-- User panel -->
+        <div
+          class="flex h-[52px] shrink-0 items-center gap-2 bg-[#232428] px-2"
+        >
+          <div
+            id="userAvatar"
+            class="avatar-gradient flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+          >
+            U
+          </div>
+
+          <div class="min-w-0 flex-1">
+            <div
+              id="sidebarUsername"
+              class="truncate text-sm font-semibold text-white"
+            >
+              User
+            </div>
+
+            <div class="flex items-center gap-1">
+              <span class="h-2 w-2 rounded-full bg-[#23a559]"></span>
+
+              <span class="text-xs text-[#b5bac1]"> Online </span>
+            </div>
+          </div>
+
+          <button
+            id="editUsernameButton"
+            class="rounded p-1.5 text-[#b5bac1] hover:bg-[#35373c] hover:text-white"
+            title="Change username"
+          >
+            <i data-lucide="settings" class="h-4 w-4"></i>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main chat -->
+      <main class="flex min-w-0 flex-1 flex-col bg-[#313338]">
+        <!-- Chat header -->
+        <header
+          class="flex h-12 shrink-0 items-center gap-3 border-b border-[#26272b] px-4 shadow-sm"
+        >
+          <i data-lucide="hash" class="h-6 w-6 text-[#949ba4]"></i>
+
+          <h1 id="roomTitle" class="truncate font-semibold text-white">
+            general
+          </h1>
+
+          <div class="ml-auto flex items-center gap-3">
+            <div
+              id="statusBadge"
+              class="flex items-center gap-2 text-xs font-medium"
+            >
+              <span
+                id="statusDot"
+                class="h-2 w-2 rounded-full bg-[#faa61a]"
+              ></span>
+
+              <span id="statusText"> Connecting </span>
+            </div>
+
+            <div class="h-6 w-px bg-[#3f4147]"></div>
+
+            <button
+              class="rounded p-1.5 text-[#b5bac1] hover:bg-[#3f4147] hover:text-white"
+              title="Notifications"
+            >
+              <i data-lucide="bell" class="h-5 w-5"></i>
+            </button>
+
+            <button
+              class="rounded p-1.5 text-[#b5bac1] hover:bg-[#3f4147] hover:text-white"
+              title="Pinned Messages"
+            >
+              <i data-lucide="pin" class="h-5 w-5"></i>
+            </button>
+
+            <button
+              class="rounded p-1.5 text-[#b5bac1] hover:bg-[#3f4147] hover:text-white"
+              title="Members"
+            >
+              <i data-lucide="users" class="h-5 w-5"></i>
+            </button>
+
+            <button
+              class="rounded p-1.5 text-[#b5bac1] hover:bg-[#3f4147] hover:text-white"
+              title="Search"
+            >
+              <i data-lucide="search" class="h-5 w-5"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Connection warning -->
+        <div
+          id="connectionAlert"
+          class="hidden border-b border-[#faa61a]/20 bg-[#faa61a]/10 px-4 py-2 text-xs text-[#faa61a]"
+        >
+          <div class="flex items-center gap-2">
+            <i data-lucide="wifi-off" class="h-4 w-4"></i>
+
+            <span> Connection lost. Reconnecting automatically... </span>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messageList" class="scrollbar min-h-0 flex-1 overflow-y-auto">
+          <!-- Channel welcome -->
+          <div id="welcome" class="px-4 pt-8 pb-5">
+            <div
+              class="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[#404249]"
+            >
+              <i data-lucide="hash" class="h-8 w-8 text-[#dbdee1]"></i>
+            </div>
+
+            <h2 id="welcomeTitle" class="text-3xl font-bold text-white">
+              Welcome to #general!
+            </h2>
+
+            <p class="mt-1 text-sm text-[#b5bac1]">
+              This is the beginning of this channel.
+            </p>
+          </div>
+
+          <div id="messages"></div>
+
+          <div id="messagesEnd"></div>
+        </div>
+
+        <!-- Message composer -->
+        <div class="shrink-0 px-4 pt-2 pb-6">
+          <form
+            id="messageForm"
+            class="flex items-center rounded-lg bg-[#383a40] px-4 py-0"
+          >
+            <button
+              type="button"
+              class="mr-3 shrink-0 rounded-full text-[#b5bac1] hover:text-white"
+              title="Add Attachment"
+            >
+              <i data-lucide="plus-circle" class="h-5 w-5"></i>
+            </button>
+
+            <input
+              id="messageInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Message #general"
+              class="h-11 min-w-0 flex-1 bg-transparent text-sm text-[#dbdee1] outline-none placeholder:text-[#949ba4]"
+              disabled
+            />
+
+            <div class="ml-3 flex shrink-0 items-center gap-3">
+              <button
+                type="button"
+                class="text-[#b5bac1] hover:text-white"
+                title="Gift"
+              >
+                <i data-lucide="gift" class="h-5 w-5"></i>
+              </button>
+
+              <button
+                type="button"
+                class="text-[#b5bac1] hover:text-white"
+                title="GIF"
+              >
+                <span class="text-xs font-bold"> GIF </span>
+              </button>
+
+              <button
+                type="button"
+                class="text-[#b5bac1] hover:text-white"
+                title="Emoji"
+              >
+                <i data-lucide="smile" class="h-5 w-5"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      <!-- Members sidebar -->
+      <aside
+        class="hidden w-60 shrink-0 border-l border-[#26272b] bg-[#2b2d31] xl:block"
+      >
+        <div class="px-4 py-4">
+          <div
+            class="mb-3 text-xs font-semibold tracking-wide text-[#949ba4] uppercase"
+          >
+            Online — 1
+          </div>
+
+          <div class="flex items-center gap-3 rounded px-2 py-1.5">
+            <div
+              id="memberAvatar"
+              class="avatar-gradient relative flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white"
+            >
+              U
+
+              <span
+                class="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-[#2b2d31] bg-[#23a559]"
+              ></span>
+            </div>
+
+            <div class="min-w-0">
+              <div
+                id="memberUsername"
+                class="truncate text-sm font-medium text-white"
+              >
+                User
+              </div>
+
+              <div class="text-xs text-[#949ba4]">Online</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Username modal -->
+    <div
+      id="usernameModal"
+      class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="w-full max-w-md overflow-hidden rounded-lg bg-[#313338] shadow-2xl"
+      >
+        <div class="px-6 pt-6 pb-2">
+          <h2 class="text-2xl font-bold text-white">Welcome to Yuki Chat</h2>
+
+          <p class="mt-2 text-sm leading-6 text-[#b5bac1]">
+            Before you join the conversation, choose a username. You can change
+            it later.
+          </p>
+        </div>
+
+        <form id="usernameForm" class="space-y-5 px-6 pt-4 pb-6">
+          <div>
+            <label
+              for="usernameModalInput"
+              class="mb-2 block text-xs font-bold text-[#b5bac1] uppercase"
+            >
+              Display Name
+            </label>
+
+            <input
+              id="usernameModalInput"
+              type="text"
+              maxlength="32"
+              autocomplete="nickname"
+              placeholder="Enter your username"
+              class="h-11 w-full rounded-md border-0 bg-[#1e1f22] px-3 text-sm text-white outline-none placeholder:text-[#6d7076] focus:ring-2 focus:ring-[#5865f2]"
+              required
+            />
+
+            <p
+              id="usernameError"
+              class="mt-2 hidden text-xs text-[#f23f42]"
+            ></p>
+          </div>
+
+          <button
+            type="submit"
+            class="flex h-11 w-full items-center justify-center rounded-md bg-[#5865f2] text-sm font-semibold text-white transition hover:bg-[#4752c4]"
+          >
+            Enter Yuki Chat
+          </button>
+
+          <p class="text-center text-xs text-[#949ba4]">
+            Your username is saved in this browser.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      /*
+       * Fixed rooms available in the application.
+       */
+
+      const ROOMS = [
+        {
+          id: 'general',
+          name: 'general',
+        },
+        {
+          id: 'random',
+          name: 'random',
+        },
+        {
+          id: 'gaming',
+          name: 'gaming',
+        },
+      ]
+
+      const USERNAME_STORAGE_KEY = 'yuki-chat-username'
+
+      /*
+       * Application state.
+       */
+
+      let username = ''
+      let currentTopic = 'general'
+      let currentTopicRef = 'general'
+      let messages = []
+
+      /*
+       * WebSocket state.
+       */
+
+      let socket = null
+      let reconnectTimer = null
+      let reconnectAttempt = 0
+      let disposed = false
+
+      /*
+       * Build the WebSocket URL from the current page.
+       *
+       * HTTP  -> ws://
+       * HTTPS -> wss://
+       */
+
+      const wsUrl = new URL('/ws', window.location.href)
+
+      wsUrl.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+
+      /*
+       * Cache DOM references.
+       */
+
+      const roomList = document.getElementById('roomList')
+
+      const roomTitle = document.getElementById('roomTitle')
+
+      const welcomeTitle = document.getElementById('welcomeTitle')
+
+      const messagesElement = document.getElementById('messages')
+
+      const messagesEnd = document.getElementById('messagesEnd')
+
+      const messageForm = document.getElementById('messageForm')
+
+      const messageInput = document.getElementById('messageInput')
+
+      const statusDot = document.getElementById('statusDot')
+
+      const statusText = document.getElementById('statusText')
+
+      const connectionAlert = document.getElementById('connectionAlert')
+
+      const usernameModal = document.getElementById('usernameModal')
+
+      const usernameForm = document.getElementById('usernameForm')
+
+      const usernameModalInput = document.getElementById('usernameModalInput')
+
+      const usernameError = document.getElementById('usernameError')
+
+      const editUsernameButton = document.getElementById('editUsernameButton')
+
+      const sidebarUsername = document.getElementById('sidebarUsername')
+
+      const memberUsername = document.getElementById('memberUsername')
+
+      const userAvatar = document.getElementById('userAvatar')
+
+      const memberAvatar = document.getElementById('memberAvatar')
+
+      /*
+       * Load the username saved in localStorage.
+       */
+
+      function loadUsername() {
+        const value = localStorage.getItem(USERNAME_STORAGE_KEY)
+
+        if (!value) {
+          return null
+        }
+
+        const normalized = value.trim()
+
+        return normalized || null
+      }
+
+      /*
+       * Save the username to localStorage.
+       */
+
+      function saveUsername(value) {
+        localStorage.setItem(USERNAME_STORAGE_KEY, value)
+      }
+
+      /*
+       * Update every username displayed in the UI.
+       */
+
+      function renderUsername() {
+        sidebarUsername.textContent = username
+
+        memberUsername.textContent = username
+
+        const initial = username.charAt(0).toUpperCase() || 'U'
+
+        userAvatar.textContent = initial
+
+        memberAvatar.textContent = initial
+      }
+
+      /*
+       * Open the username dialog.
+       */
+
+      function openUsernameModal() {
+        usernameModal.classList.remove('hidden')
+
+        usernameModalInput.value = username
+
+        usernameError.classList.add('hidden')
+
+        requestAnimationFrame(() => {
+          usernameModalInput.focus()
+          usernameModalInput.select()
+        })
+      }
+
+      /*
+       * Close the username dialog.
+       */
+
+      function closeUsernameModal() {
+        usernameModal.classList.add('hidden')
+
+        usernameError.classList.add('hidden')
+      }
+
+      /*
+       * Escape user-provided content before
+       * inserting it into HTML.
+       */
+
+      function escapeHtml(value) {
+        const element = document.createElement('div')
+
+        element.textContent = value
+
+        return element.innerHTML
+      }
+
+      /*
+       * Render the room list.
+       */
+
+      function renderRooms() {
+        roomList.innerHTML = ROOMS.map((room) => {
+          const active = room.id === currentTopic
+
+          return `
+              <button
+                type="button"
+                data-room="${escapeHtml(room.id)}"
+                class="room-button flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm font-medium ${
+                  active ? 'active' : 'text-[#949ba4]'
+                }"
+              >
+                <i
+                  data-lucide="hash"
+                  class="room-icon h-5 w-5 shrink-0 ${
+                    active ? 'text-white' : 'text-[#80848e]'
+                  }"
+                ></i>
+
+                <span class="truncate">
+                  ${escapeHtml(room.name)}
+                </span>
+              </button>
+            `
+        }).join('')
+
+        roomList.querySelectorAll('[data-room]').forEach((button) => {
+          button.addEventListener('click', () => {
+            const room = button.dataset.room
+
+            if (!room) {
+              return
+            }
+
+            switchRoom(room)
+          })
+        })
+
+        lucide.createIcons()
+      }
+
+      /*
+       * Switch to another room.
+       */
+
+      function switchRoom(topic) {
+        if (topic === currentTopic) {
+          return
+        }
+
+        const previousTopic = currentTopicRef
+
+        currentTopic = topic
+        currentTopicRef = topic
+
+        messages = []
+
+        renderRooms()
+        renderRoomHeader()
+        renderMessages()
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          sendUnsubscribe(previousTopic)
+
+          sendSubscribe(topic)
+        }
+
+        messageInput.focus()
+      }
+
+      /*
+       * Update the active room header.
+       */
+
+      function renderRoomHeader() {
+        roomTitle.textContent = currentTopic
+
+        welcomeTitle.textContent = `Welcome to #${currentTopic}!`
+
+        messageInput.placeholder = `Message #${currentTopic}`
+      }
+
+      /*
+       * Update the connection status.
+       */
+
+      function setStatus(status) {
+        statusText.textContent = status
+
+        statusDot.className = 'h-2 w-2 rounded-full'
+
+        if (status === 'Connected') {
+          statusDot.classList.add('bg-[#23a559]')
+
+          statusText.className = 'text-[#23a559]'
+
+          connectionAlert.classList.add('hidden')
+
+          messageInput.disabled = false
+
+          return
+        }
+
+        if (status === 'Connecting') {
+          statusDot.classList.add('bg-[#faa61a]')
+
+          statusText.className = 'text-[#faa61a]'
+
+          messageInput.disabled = true
+
+          return
+        }
+
+        statusDot.classList.add('bg-[#f23f42]')
+
+        statusText.className = 'text-[#f23f42]'
+
+        connectionAlert.classList.remove('hidden')
+
+        messageInput.disabled = true
+      }
+
+      /*
+       * Render all messages.
+       *
+       * The vertical spacing is intentionally small
+       * to match Discord's compact message layout.
+       */
+
+      function renderMessages() {
+        messagesElement.innerHTML = messages
+          .map((message) => {
+            const initial = message.sender.charAt(0).toUpperCase() || 'U'
+
+            return `
+                <div
+                  class="message-row flex gap-4 px-4 py-2"
+                >
+                  <div
+                    class="avatar-gradient mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                  >
+                    ${escapeHtml(initial)}
+                  </div>
+
+                  <div
+                    class="min-w-0 flex-1"
+                  >
+                    <div
+                      class="flex items-baseline gap-2"
+                    >
+                      <span
+                        class="text-sm font-semibold text-white"
+                      >
+                        ${escapeHtml(message.sender)}
+                      </span>
+
+                      <span
+                        class="text-[11px] text-[#949ba4]"
+                      >
+                        ${escapeHtml(message.time)}
+                      </span>
+                    </div>
+
+                    <p
+                      class="break-words text-sm leading-5 text-[#dbdee1]"
+                    >
+                      ${escapeHtml(message.text)}
+                    </p>
+                  </div>
+                </div>
+              `
+          })
+          .join('')
+
+        requestAnimationFrame(() => {
+          messagesEnd.scrollIntoView({
+            behavior: 'smooth',
+            block: 'end',
+          })
+        })
+      }
+
+      /*
+       * Add a message received from the server.
+       */
+
+      function addMessage(data) {
+        if (!data || !data.topic || !data.payload) {
+          return
+        }
+
+        /*
+         * Ignore messages that belong to another room.
+         */
+
+        if (data.topic !== currentTopicRef) {
+          return
+        }
+
+        messages.push({
+          id: crypto.randomUUID(),
+
+          sender: data.payload.sender || 'Anonymous',
+
+          text: data.payload.text || '',
+
+          time: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        })
+
+        renderMessages()
+      }
+
+      /*
+       * Subscribe to a room.
+       */
+
+      function sendSubscribe(topic) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          return
+        }
+
+        socket.send(
+          JSON.stringify({
+            action: 'subscribe',
+            topic,
+          })
+        )
+      }
+
+      /*
+       * Unsubscribe from a room.
+       */
+
+      function sendUnsubscribe(topic) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          return
+        }
+
+        socket.send(
+          JSON.stringify({
+            action: 'unsubscribe',
+            topic,
+          })
+        )
+      }
+
+      /*
+       * Schedule a reconnect with exponential backoff.
+       *
+       * 1s -> 2s -> 4s -> 8s -> 10s
+       */
+
+      function scheduleReconnect() {
+        if (disposed || reconnectTimer) {
+          return
+        }
+
+        const delay = Math.min(1000 * 2 ** reconnectAttempt, 10000)
+
+        reconnectAttempt += 1
+
+        console.log(`Reconnecting in ${delay}ms...`)
+
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null
+
+          connect()
+        }, delay)
+      }
+
+      /*
+       * Create a WebSocket connection.
+       */
+
+      function connect() {
+        if (disposed) {
+          return
+        }
+
+        setStatus('Connecting')
+
+        console.log('Connecting to:', wsUrl.toString())
+
+        const ws = new WebSocket(wsUrl.toString())
+
+        socket = ws
+
+        ws.addEventListener('open', () => {
+          if (disposed || socket !== ws) {
+            return
+          }
+
+          console.log('WebSocket connected')
+
+          reconnectAttempt = 0
+
+          setStatus('Connected')
+
+          /*
+           * Subscribe to the currently selected
+           * room after every connection.
+           */
+
+          sendSubscribe(currentTopicRef)
+        })
+
+        ws.addEventListener('message', (event) => {
+          if (socket !== ws) {
+            return
+          }
+
+          try {
+            const data = JSON.parse(event.data)
+
+            addMessage(data)
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error)
+          }
+        })
+
+        ws.addEventListener('error', (error) => {
+          console.error('WebSocket error:', error)
+
+          /*
+           * Closing the socket lets the close
+           * event start the reconnect process.
+           */
+
+          ws.close()
+        })
+
+        ws.addEventListener('close', () => {
+          if (socket !== ws) {
+            return
+          }
+
+          console.log('WebSocket disconnected')
+
+          socket = null
+
+          if (disposed) {
+            return
+          }
+
+          setStatus('Disconnected')
+
+          scheduleReconnect()
+        })
+      }
+
+      /*
+       * Handle message submission.
+       */
+
+      messageForm.addEventListener('submit', (event) => {
+        event.preventDefault()
+
+        const text = messageInput.value.trim()
+
+        if (!text) {
+          return
+        }
+
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          return
+        }
+
+        socket.send(
+          JSON.stringify({
+            action: 'publish',
+
+            topic: currentTopicRef,
+
+            payload: {
+              sender: username,
+              text,
+            },
+          })
+        )
+
+        messageInput.value = ''
+
+        messageInput.focus()
+      })
+
+      /*
+       * Handle username creation and updates.
+       */
+
+      usernameForm.addEventListener('submit', (event) => {
+        event.preventDefault()
+
+        const value = usernameModalInput.value.trim()
+
+        if (value.length < 2 || value.length > 32) {
+          usernameError.textContent =
+            'Username must contain between 2 and 32 characters.'
+
+          usernameError.classList.remove('hidden')
+
+          return
+        }
+
+        username = value
+
+        saveUsername(username)
+
+        renderUsername()
+
+        closeUsernameModal()
+      })
+
+      /*
+       * Open the username editor.
+       */
+
+      editUsernameButton.addEventListener('click', () => {
+        openUsernameModal()
+      })
+
+      /*
+       * Keep the first-time username dialog
+       * from being dismissed accidentally.
+       */
+
+      usernameModal.addEventListener('click', (event) => {
+        if (event.target === usernameModal) {
+          usernameModalInput.focus()
+        }
+      })
+
+      /*
+       * Clean up when leaving the page.
+       */
+
+      window.addEventListener('beforeunload', () => {
+        disposed = true
+
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer)
+
+          reconnectTimer = null
+        }
+
+        if (socket) {
+          socket.close()
+          socket = null
+        }
+      })
+
+      /*
+       * Initialize the username.
+       */
+
+      const savedUsername = loadUsername()
+
+      if (savedUsername) {
+        username = savedUsername
+
+        renderUsername()
+
+        closeUsernameModal()
+      } else {
+        usernameModal.classList.remove('hidden')
+      }
+
+      /*
+       * Initialize the room and connection UI.
+       */
+
+      renderRooms()
+      renderRoomHeader()
+      renderMessages()
+      setStatus('Connecting')
+
+      lucide.createIcons()
+
+      /*
+       * Start the WebSocket connection.
+       */
+
+      connect()
+    </script>
+  </body>
+</html>

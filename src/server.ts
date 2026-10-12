@@ -4,14 +4,13 @@ import * as OpenApi from 'effect/http-api/OpenApi'
 import * as Layer from 'effect/Layer'
 
 import { Api } from '@/contract'
-import { homeController } from '@/presentation/http/home.controller'
 import { postController } from '@/presentation/http/post.controller'
 
 import pkg from '../package.json' with { type: 'json' }
 
 const ApiRoutes = HttpApiBuilder.layer(Api, {
   openapiPath: '/openapi.json',
-}).pipe(Layer.provide([homeController, postController]))
+}).pipe(Layer.provide([postController]))
 
 const DocsRoutes = HttpApiScalar.layer(
   Api.annotateMerge(

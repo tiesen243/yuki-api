@@ -7,7 +7,7 @@ import fmt from './oxfmt.config'
 import lint from './oxlint.config'
 
 export default defineConfig({
-  plugins: [cloudflare({ tunnel: true }) as unknown as Plugin],
+  plugins: [cloudflare() as unknown as Plugin],
   resolve: { tsconfigPaths: true },
   fmt,
   lint,
