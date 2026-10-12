@@ -1,0 +1,32 @@
+{
+  "name": "yuki-api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "cf build",
+    "check": "vp check && bun check",
+    "check:fix": "vp check --fix",
+    "deploy": "cf deploy",
+    "destroy": "cf destroy",
+    "dev": "cf dev",
+    "postinstall": "cf workers types"
+  },
+  "dependencies": {
+    "@effect/sql-d1": "^4.0.3",
+    "drizzle-orm": "^1.0.0-rc.5",
+    "effect": "^4.0.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.sha-c82c3efb3",
+    "cf": "^1.0.0-beta.14",
+    "drizzle-kit": "^1.0.0-rc.5",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.1.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"
+  }
+}
