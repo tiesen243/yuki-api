@@ -10,7 +10,8 @@
     "deploy": "cf deploy",
     "destroy": "cf destroy",
     "dev": "cf dev",
-    "postinstall": "cf workers types"
+    "postinstall": "cf workers types",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@effect/sql-d1": "^4.0.4",
