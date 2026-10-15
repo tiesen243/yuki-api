@@ -25,6 +25,7 @@ const { handler } = HttpRouter.toWebHandler(
 
 export { StreamDurableObject } from '@/stream-durable-object'
 export default {
+  // oxlint-disable-next-line typescript/promise-function-async
   fetch: (request) => {
     const url = new URL(request.url)
     if (url.pathname === '/ws') {

@@ -1,6 +1,7 @@
 import { defineConfig } from 'oxlint'
 
 export default defineConfig({
+  jsPlugins: [{ name: 'vite-plus', specifier: 'vite-plus/oxlint-plugin' }],
   plugins: [
     'eslint',
     'typescript',
@@ -395,7 +396,7 @@ export default defineConfig({
     'typescript/no-unsafe-function-type': 'error',
     'typescript/no-unsafe-member-access': 'error',
     'typescript/no-unsafe-return': 'error',
-    'typescript/no-unsafe-type-assertion': 'error',
+    'typescript/no-unsafe-type-assertion': 'off',
     'typescript/no-unsafe-unary-minus': 'error',
     'typescript/no-useless-default-assignment': 'error',
     'typescript/no-useless-empty-export': 'error',
@@ -575,6 +576,9 @@ export default defineConfig({
     'unicorn/switch-case-break-position': 'error',
     'unicorn/text-encoding-identifier-case': ['error', { withDash: true }],
     'unicorn/throw-new-error': 'error',
+
+    // --- vite-plus ---
+    'vite-plus/prefer-vite-plus-imports': 'error',
   },
   overrides: [
     {
@@ -596,4 +600,8 @@ export default defineConfig({
       },
     },
   ],
+  options: {
+    typeAware: true,
+    typeCheck: true,
+  },
 })

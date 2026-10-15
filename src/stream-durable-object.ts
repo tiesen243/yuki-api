@@ -11,7 +11,7 @@ interface Message {
 }
 
 export class StreamDurableObject extends DurableObject<Env> {
-  private topics = new Map<string, Set<WebSocket>>()
+  private readonly topics = new Map<string, Set<WebSocket>>()
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
@@ -98,19 +98,19 @@ export class StreamDurableObject extends DurableObject<Env> {
 
       switch (data.action) {
         case 'subscribe':
-          if (!data.topic) return
+          if (data.topic === undefined || data.topic === '') return
 
           this.subscribe(ws, data.topic)
           break
 
         case 'unsubscribe':
-          if (!data.topic) return
+          if (data.topic === undefined || data.topic === '') return
 
           this.unsubscribe(ws, data.topic)
           break
 
         case 'publish':
-          if (!data.topic) return
+          if (data.topic === undefined || data.topic === '') return
 
           this.publish(data.topic, data.payload)
           break
@@ -181,7 +181,7 @@ export class StreamDurableObject extends DurableObject<Env> {
 
     // Get topic ID.
     const topicRow = this.ctx.storage.sql
-      .exec<{ id: number }>(
+      .exec<{ id: number | null }>(
         `
           SELECT id
           FROM topics
@@ -191,7 +191,7 @@ export class StreamDurableObject extends DurableObject<Env> {
       )
       .one()
 
-    if (!topicRow) return
+    if (topicRow.id === null) return
 
     // Store durable subscription.
     this.ctx.storage.sql.exec(
